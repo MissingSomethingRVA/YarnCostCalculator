@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Yarn Cost Calculator</title>
+  <meta name="description" content="Quickly estimate the total cost of a crochet/knit project: cost per yard/meter, skeins needed, and final price with tax or discounts." />
+  <style>
+    :root{
+      --accent:#FE846C; /* Crochet Current orange */
+      --teal:#19A7A8;  /* Crochet Current teal */
+      --ink:#222;
+      --muted:#6b7280;
+      --bg:#fafafa;
+      --card:#fff;
+      --ring: rgba(25,167,168,.35);
+    }
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;line-height:1.4;margin:0;background:var(--bg);color:var(--ink)}
+    header{padding:2rem 1rem;text-align:center;background:linear-gradient(90deg,var(--accent),var(--teal));color:#fff}
+    header h1{margin:0 0 .25rem;font-size:clamp(1.4rem,3.5vw,2rem)}
+    header p{margin:0;opacity:.95}
+    .wrap{max-width:980px;margin:0 auto;padding:1.25rem}
+    .card{background:var(--card);border-radius:16px;padding:1rem;box-shadow:0 10px 24px rgba(0,0,0,.06)}
+    .grid{display:grid;gap:1rem}
+    @media (min-width:900px){.grid{grid-template-columns:1.1fr .9fr}}
+
+    h2{font-size:1.1rem;margin:.25rem 0 .5rem;color:var(--teal)}
+    fieldset{border:1px solid #e5e7eb;border-radius:12px;padding:1rem}
+    legend{padding:0 .5rem;color:var(--muted)}
+    label{display:block;font-size:.92rem;color:#374151;margin:.4rem 0 .25rem}
+    input[type="number"], input[type="text"], select{
+      width:100%;padding:.65rem .7rem;border:1px solid #d1d5db;border-radius:10px;background:#fff;
+      outline:none;font:inherit
+    }
+    input:focus, select:focus{border-color:var(--teal);box-shadow:0 0 0 .2rem var(--ring)}
+    .row{display:grid;grid-template-columns:1fr 120px;gap:.5rem}
+    .inline{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}
+    .muted{color:var(--muted);font-size:.85rem}
+    .hint{font-size:.85rem;color:#4b5563;margin-top:.25rem}
+    .totals{background:#f9fafb;border:1px dashed #e5e7eb;border-radius:12px;padding:1rem}
+    .totals h3{margin:.25rem 0 .5rem}
+    .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem}
+    .pill{background:#fff;border:1px solid #e5e7eb;border-radius:999px;padding:.6rem .8rem;display:flex;justify-content:space-between;align-items:center}
+    .pill strong{font-variant-numeric:tabular-nums}
+    .help{margin-top:.75rem}
+    .footer{font-size:.85rem;color:#6b7280;text-align:center;margin-top:1rem}
+    .btn{appearance:none;border:none;background:var(--teal);color:#fff;border-radius:10px;padding:.7rem 1rem;font-weight:600;cursor:pointer}
+    .btn.secondary{background:#eee;color:#111}
+    .stack{display:flex;gap:.5rem;flex-wrap:wrap}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Yarn Cost Calculator</h1>
+    <p>Figure out skeins needed and total project cost in seconds.</p>
+  </header>
+
+  <main class="wrap grid">
+    <section class="card" aria-labelledby="inputs-title">
+      <h2 id="inputs-title">Inputs</h2>
+
+      <fieldset>
+        <legend>Yarn details</legend>
+        <div class="row">
+          <div>
+            <label for="price">Price per skein</label>
+            <input id="price" type="number" inputmode="decimal" min="0" step="0.01" placeholder="e.g., 5.49" value="5.49" />
+          </div>
+          <div>
+            <label for="currency">Currency</label>
+            <input id="currency" type="text" maxlength="4" value="$" aria-label="Currency symbol"/>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="yardage">Yardage per skein</label>
+            <input id="yardage" type="number" inputmode="numeric" min="1" step="1" placeholder="e.g., 120" value="120"/>
+          </div>
+          <div>
+            <label for="unitPerSkein">Units</label>
+            <select id="unitPerSkein">
+              <option value="yd">yards</option>
+              <option value="m">meters</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Project size</legend>
+        <div class="inline" role="radiogroup" aria-label="Project input mode">
+          <label class="inline"><input type="radio" name="mode" value="yardage" checked> I know the project yardage</label>
+          <label class="inline"><input type="radio" name="mode" value="skeins"> I know the number of skeins</label>
+        </div>
+
+        <div id="byYardage">
+          <div class="row">
+            <div>
+              <label for="projYardage">Project yardage needed</label>
+              <input id="projYardage" type="number" inputmode="numeric" min="1" step="1" placeholder="e.g., 850" value="850"/>
+            </div>
+            <div>
+              <label for="projUnits">Units</label>
+              <select id="projUnits">
+                <option value="yd">yards</option>
+                <option value="m">meters</option>
+              </select>
+            </div>
+          </div>
+          <p class="hint">We’ll estimate skeins needed and round up so you don’t run short.</p>
+        </div>
+
+        <div id="bySkeins" hidden>
+          <div class="row">
+            <div>
+              <label for="projSkeins">Skeins needed</label>
+              <input id="projSkeins" type="number" inputmode="numeric" min="1" step="1" placeholder="e.g., 8" value="8"/>
+            </div>
+            <div></div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Adjustments (optional)</legend>
+        <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.75rem">
+          <div>
+            <label for="discount">Coupon/discount (%)</label>
+            <input id="discount" type="number" inputmode="decimal" min="0" max="100" step="0.1" placeholder="e.g., 20" value="0"/>
+          </div>
+          <div>
+            <label for="tax">Sales tax (%)</label>
+            <input id="tax" type="number" inputmode="decimal" min="0" max="100" step="0.1" placeholder="e.g., 6" value="0"/>
+          </div>
+          <div>
+            <label for="wastage">Buffer/wastage (%)</label>
+            <input id="wastage" type="number" inputmode="decimal" min="0" max="100" step="0.1" placeholder="e.g., 10" value="0"/>
+          </div>
+        </div>
+        <p class="hint">Buffer adds extra yardage to your project estimate (for swatching, mistakes, or color changes).</p>
+      </fieldset>
+
+      <div class="stack">
+        <button class="btn" id="calc">Calculate</button>
+        <button class="btn secondary" id="reset">Reset</button>
+      </div>
+    </section>
+
+    <aside class="card" aria-labelledby="results-title">
+      <h2 id="results-title">Results</h2>
+      <div class="totals">
+        <h3>At a glance</h3>
+        <div class="kpi" id="kpi">
+          <!-- KPI pills will render here -->
+        </div>
+        <div class="help muted">
+          Pro tip: buying an extra skein is often cheaper than hunting down a matching dye lot later.
+        </div>
+      </div>
+
+      <div class="help">
+        <details>
+          <summary><strong>What the numbers mean</strong></summary>
+          <ul>
+            <li><em>Cost / yard (meter)</em> uses the price per skein and yardage per skein.</li>
+            <li><em>Adjusted price</em> applies your discount first, then sales tax.</li>
+            <li><em>Skeins for project</em> is rounded up so you don’t run short.</li>
+          </ul>
+        </details>
+      </div>
+
+      <div class="footer">Made with 🧶 by you. (You’ve got this!)</div>
+    </aside>
+  </main>
+
+  <script>
+    const $ = (s, r=document)=>r.querySelector(s);
+    const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
+
+    const els = {
+      price: $('#price'),
+      currency: $('#currency'),
+      yardage: $('#yardage'),
+      unitPerSkein: $('#unitPerSkein'),
+      projYardage: $('#projYardage'),
+      projUnits: $('#projUnits'),
+      projSkeins: $('#projSkeins'),
+      discount: $('#discount'),
+      tax: $('#tax'),
+      wastage: $('#wastage'),
+      byYardage: $('#byYardage'),
+      bySkeins: $('#bySkeins'),
+      kpi: $('#kpi'),
+      calc: $('#calc'),
+      reset: $('#reset')
+    };
+
+    // Toggle input mode
+    $$('input[name="mode"]').forEach(r => r.addEventListener('change', e => {
+      const useYardage = e.target.value === 'yardage';
+      els.byYardage.hidden = !useYardage;
+      els.bySkeins.hidden = useYardage;
+    }));
+
+    function toYards(value, unit){
+      return unit === 'm' ? value * 1.0936133 : value;
+    }
+    function fromYards(value, unit){
+      return unit === 'm' ? value / 1.0936133 : value;
+    }
+    function clamp(n){return Number.isFinite(n) ? n : 0}
+    function money(n, cur){
+      const v = Math.round(n * 100) / 100;
+      return `${cur}${v.toFixed(2)}`;
+    }
+
+    function compute(){
+      const price = clamp(parseFloat(els.price.value));
+      const currency = els.currency.value || '$';
+      const yardagePerSkeinInput = clamp(parseFloat(els.yardage.value));
+      const unitPerSkein = els.unitPerSkein.value;
+      const yardsPerSkein = toYards(yardagePerSkeinInput, unitPerSkein);
+
+      const discountPct = Math.max(0, clamp(parseFloat(els.discount.value)));
+      const taxPct = Math.max(0, clamp(parseFloat(els.tax.value)));
+      const wastagePct = Math.max(0, clamp(parseFloat(els.wastage.value)));
+
+      const mode = $$('input[name="mode"]').find(x=>x.checked).value;
+
+      const priceAfterDiscount = price * (1 - discountPct/100);
+      const priceAfterTax = priceAfterDiscount * (1 + taxPct/100);
+
+      const costPerYard = yardsPerSkein > 0 ? priceAfterTax / yardsPerSkein : 0;
+      const costPerMeter = costPerYard / 1.0936133;
+
+      let skeinsNeeded = 0;
+      let projectCost = 0;
+      let projectYards = 0;
+
+      if(mode === 'yardage'){
+        const projInput = clamp(parseFloat(els.projYardage.value));
+        const projUnits = els.projUnits.value;
+        projectYards = toYards(projInput, projUnits) * (1 + wastagePct/100);
+        skeinsNeeded = Math.ceil(projectYards / yardsPerSkein);
+      } else {
+        skeinsNeeded = Math.max(1, Math.ceil(clamp(parseFloat(els.projSkeins.value))));
+        projectYards = skeinsNeeded * yardsPerSkein; // implied
+      }
+
+      projectCost = skeinsNeeded * priceAfterTax;
+
+      // Render KPIs
+      const pills = [];
+      pills.push(kpi('Cost / yard', `${money(costPerYard, currency)}`));
+      pills.push(kpi('Cost / meter', `${money(costPerMeter, currency)}`));
+      pills.push(kpi('Adjusted price / skein', `${money(priceAfterTax, currency)}`));
+      pills.push(kpi('Skeins for project', String(skeinsNeeded)));
+      pills.push(kpi('Est. project cost', `${money(projectCost, currency)}`));
+
+      // Optional details pill
+      const perSkeinYardsDisplay = `${Math.round(fromYards(yardsPerSkein, els.unitPerSkein.value))} ${els.unitPerSkein.value}`;
+      pills.push(kpi('Yardage used', `${Math.round(fromYards(projectYards, els.projUnits.value))} ${els.projUnits.value}`));
+
+      els.kpi.innerHTML = pills.join('');
+
+      function kpi(label, value){
+        return `<div class="pill"><span>${label}</span><strong>${value}</strong></div>`
+      }
+    }
+
+    els.calc.addEventListener('click', e=>{e.preventDefault(); compute();});
+    els.reset.addEventListener('click', e=>{e.preventDefault(); document.querySelector('form')?.reset(); location.reload();});
+
+    // Calculate once on load with defaults
+    compute();
+  </script>
+</body>
+</html>
