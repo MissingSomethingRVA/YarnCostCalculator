@@ -1,0 +1,337 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Yarn Cost Calculator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Light design tokens to echo Crochet Current vibe */
+    :root{
+      --cc-orange: #FE846C;
+      --cc-teal: #17A2A0;
+    }
+    .brand-gradient {
+      background: linear-gradient(90deg, var(--cc-teal), var(--cc-orange));
+    }
+    .card { background: white; border: 1px solid rgb(229 231 235); border-radius: 0.75rem; }
+    .badge { font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 9999px; font-weight: 600; display: inline-flex; align-items: center; gap:.25rem;}
+    .badge-best { background: #DCFCE7; color: #166534; }
+    .badge-avg  { background: #FEF9C3; color: #854D0E; }
+    .badge-exp  { background: #FEE2E2; color: #991B1B; }
+    .btn { display:inline-flex; align-items:center; gap:.5rem; padding:.5rem .75rem; border-radius:.5rem; border:1px solid rgb(229 231 235); background:#111827; color:white; }
+    .btn.secondary { background:white; color:#111827; }
+    .btn:disabled { opacity: .5; cursor:not-allowed; }
+    .input { width:100%; border:1px solid rgb(229 231 235); border-radius:.5rem; padding:.5rem .75rem; }
+    .muted { color: rgb(107 114 128); }
+    .toast { position: fixed; right: 1rem; bottom: 1rem; background: #111827; color: white; padding: .75rem 1rem; border-radius:.5rem; opacity: 0; transform: translateY(10px); transition: all .25s ease; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+  <!-- Header -->
+  <header class="bg-white border-b shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 py-6 text-center">
+      <h1 class="text-3xl font-semibold flex items-center justify-center gap-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color:var(--cc-teal)">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-6m3 6v-4M3 3h18M5 7h14l-1 12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 7z"/>
+        </svg>
+        Yarn Cost Calculator
+      </h1>
+      <p class="muted text-sm max-w-2xl mx-auto">Compare yarn prices and calculate cost per yard to find the best value for your projects.</p>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <!-- Input Card -->
+    <section class="card p-6 mb-8">
+      <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color:var(--cc-orange)">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/>
+        </svg>
+        Add Yarn Details
+      </h2>
+
+      <form id="yarn-form" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+          <label class="block text-sm font-medium mb-2">Yarn Name (optional)</label>
+          <input id="name" class="input" placeholder="e.g., Red Heart Super Saver">
+          <p id="err-name" class="text-red-600 text-xs mt-1 hidden"></p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-2">Price per Skein ($)</label>
+          <input id="price" class="input" inputmode="decimal" placeholder="e.g., 4.99" required>
+          <p id="err-price" class="text-red-600 text-xs mt-1 hidden"></p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-2">Yards per Skein</label>
+          <input id="yardage" class="input" inputmode="numeric" placeholder="e.g., 364" required>
+          <p id="err-yardage" class="text-red-600 text-xs mt-1 hidden"></p>
+        </div>
+
+        <div class="md:col-span-3 flex flex-wrap gap-3">
+          <button type="submit" class="btn" id="addBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/>
+            </svg>
+            Add Yarn
+          </button>
+          <button type="button" class="btn secondary" id="clearBtn">Clear All</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Results List -->
+    <section id="resultsCard" class="card p-6 mb-8 hidden">
+      <h2 class="text-xl font-semibold mb-4">Results</h2>
+      <div id="resultsList" class="space-y-4"></div>
+    </section>
+
+    <!-- Summary Cards -->
+    <section id="summary" class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 hidden">
+      <div class="card p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium muted">Best Value</p>
+            <p id="bestName" class="text-2xl font-semibold text-green-700">—</p>
+            <p id="bestCost" class="text-sm muted">$0.0000 per yard</p>
+          </div>
+          <div class="text-green-700">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="card p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium muted">Average Cost</p>
+            <p id="avgCost" class="text-2xl font-semibold">$0.0000</p>
+            <p class="text-sm muted">per yard</p>
+          </div>
+          <div class="text-sky-600">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3v18h18M7 13l3 3 7-7"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="card p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium muted">Total Entries</p>
+            <p id="totalEntries" class="text-2xl font-semibold">0</p>
+            <p class="text-sm muted">yarns compared</p>
+          </div>
+          <div class="text-sky-600">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Actions -->
+    <section id="actions" class="flex flex-wrap gap-3 mt-6 hidden">
+      <button class="btn secondary" id="exportBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
+        </svg>
+        Export Results
+      </button>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    // --- Utilities ---
+    const el = (id) => document.getElementById(id);
+    const fmtMoney = (n) => "$" + Number(n).toFixed(2);
+    const fmtPerYard = (n) => "$" + Number(n).toFixed(4);
+    const showToast = (msg) => {
+      const t = el("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      setTimeout(()=>t.classList.remove("show"), 2000);
+    };
+
+    // --- State ---
+    let yarns = []; // {id, name, price, yardage, costPerYard}
+
+    // --- Validation ---
+    function parseNumber(value){
+      if (typeof value === 'number') return value;
+      const v = String(value).replace(/[^0-9.]/g,'').trim();
+      if (v === '') return NaN;
+      return Number(v);
+    }
+
+    function validateInputs(priceStr, yardageStr){
+      const price = parseNumber(priceStr);
+      const yardage = parseNumber(yardageStr);
+      let ok = true;
+
+      // Reset errors
+      ["err-price","err-yardage"].forEach(id => { el(id).classList.add("hidden"); el(id).textContent = ""; });
+
+      if (!Number.isFinite(price) || price <= 0){
+        el("err-price").textContent = "Price must be a positive number";
+        el("err-price").classList.remove("hidden");
+        ok = false;
+      }
+      if (!Number.isFinite(yardage) || yardage <= 0){
+        el("err-yardage").textContent = "Yardage must be a positive number";
+        el("err-yardage").classList.remove("hidden");
+        ok = false;
+      }
+      return ok ? { price, yardage } : null;
+    }
+
+    // --- Rendering ---
+    function render(){
+      const resultsCard = el("resultsCard");
+      const resultsList = el("resultsList");
+      const summary = el("summary");
+      const actions = el("actions");
+
+      if (yarns.length === 0){
+        resultsCard.classList.add("hidden");
+        summary.classList.add("hidden");
+        actions.classList.add("hidden");
+        resultsList.innerHTML = "";
+        return;
+      }
+
+      resultsCard.classList.remove("hidden");
+      summary.classList.remove("hidden");
+      actions.classList.remove("hidden");
+
+      // Compute best and average
+      const best = yarns.reduce((b, y) => y.costPerYard < b.costPerYard ? y : b, yarns[0]);
+      const avg = yarns.reduce((s, y) => s + y.costPerYard, 0) / yarns.length;
+
+      // Update summary
+      el("bestName").textContent = best.name || "—";
+      el("bestCost").textContent = fmtPerYard(best.costPerYard) + " per yard";
+      el("avgCost").textContent = fmtPerYard(avg);
+      el("totalEntries").textContent = String(yarns.length);
+
+      // Render list
+      resultsList.innerHTML = "";
+      yarns.forEach((y, idx) => {
+        const ratio = y.costPerYard / best.costPerYard;
+        let badge = '<span class="badge badge-exp">Expensive</span>';
+        if (y.id === best.id) badge = '<span class="badge badge-best">Best</span>';
+        else if (ratio <= 1.5) badge = '<span class="badge badge-avg">Average</span>';
+
+        const item = document.createElement("div");
+        item.className = "card p-4";
+        item.innerHTML = `
+          <div class="flex justify-between items-start mb-3">
+            <div class="flex-1">
+              <h3 class="font-semibold text-lg mb-1">${y.name || "Yarn " + (idx+1)}</h3>
+              <div class="flex flex-wrap gap-4 text-sm muted mb-3">
+                <span><strong>Price:</strong> ${fmtMoney(y.price)} per skein</span>
+                <span><strong>Yardage:</strong> ${y.yardage} yards per skein</span>
+              </div>
+            </div>
+            <button class="text-red-600 hover:text-red-800" aria-label="Remove" title="Remove">
+              &#10005;
+            </button>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div class="text-sm muted">Cost per yard</div>
+              <div class="text-2xl font-semibold">${fmtPerYard(y.costPerYard)}</div>
+              <div class="text-sm muted">per yard</div>
+            </div>
+            <div>${badge}</div>
+          </div>
+        `;
+
+        const removeBtn = item.querySelector("button");
+        removeBtn.addEventListener("click", () => {
+          yarns = yarns.filter(e => e.id !== y.id);
+          showToast("Yarn entry removed");
+          render();
+        });
+
+        resultsList.appendChild(item);
+      });
+    }
+
+    // --- Handlers ---
+    el("yarn-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = el("name").value.trim();
+      const priceStr = el("price").value;
+      const yardageStr = el("yardage").value;
+
+      const parsed = validateInputs(priceStr, yardageStr);
+      if (!parsed) return;
+
+      const { price, yardage } = parsed;
+      const costPerYard = price / yardage;
+      const entry = {
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
+        name,
+        price,
+        yardage,
+        costPerYard
+      };
+      yarns.push(entry);
+
+      // clear inputs
+      el("name").value = "";
+      el("price").value = "";
+      el("yardage").value = "";
+
+      showToast((name || "Yarn") + " added to comparison");
+      render();
+    });
+
+    el("clearBtn").addEventListener("click", () => {
+      yarns = [];
+      showToast("All entries cleared");
+      render();
+    });
+
+    el("exportBtn").addEventListener("click", () => {
+      if (yarns.length === 0){
+        showToast("No data to export");
+        return;
+      }
+      const header = ["Yarn Name","Price per Skein","Yards per Skein","Cost per Yard"];
+      const rows = yarns.map(y => [
+        '"' + (y.name || "") + '"',
+        fmtMoney(y.price),
+        y.yardage,
+        fmtPerYard(y.costPerYard)
+      ]);
+      const csv = [header.join(","), ...rows.map(r => r.join(","))].join("\n");
+      const blob = new Blob([csv], {type:"text/csv"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "yarn_cost_comparison.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast("Export complete");
+    });
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html>
