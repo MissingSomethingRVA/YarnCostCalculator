@@ -1,6 +1,6 @@
 {
   "name": "Yarn Cost Calculator",
-  "short_name": "YarnCalc",
+  "short_name": "YarnCost",
   "description": "Estimate skeins needed and total cost for crochet/knit projects.",
   "start_url": "./index.html",
   "scope": "./",
