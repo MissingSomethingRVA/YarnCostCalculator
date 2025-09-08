@@ -3,6 +3,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#FE846C">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Yarn Cost Calculator</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -333,5 +337,12 @@
     // Initial render
     render();
   </script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(console.error);
+    });
+  }
+</script>
 </body>
 </html>
