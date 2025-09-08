@@ -1,0 +1,14 @@
+{
+  "name": "Yarn Cost Calculator",
+  "short_name": "YarnCalc",
+  "description": "Estimate skeins needed and total cost for crochet/knit projects.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#FE846C",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
